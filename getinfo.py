@@ -15,6 +15,13 @@ os_release = match(r'^\d+', platform.linux_distribution()[1]).group()
 tree = etree.parse('errata.latest.xml')
 root = tree.getroot()
 
+"""
+def GetErrataWeb()
+- download file with md5
+- if errata is given, check md5
+- if md5 matches - do nothing. Parse.
+- or get zipped file from site and unzip it. Parse.
+"""
 
 def GetRpmListFromFile( rpmStreamFile ):
 	with open( rpmStreamFile, 'r' ) as rpmStream:
@@ -42,6 +49,10 @@ def ParseRpmList( rpmList ):
 				      'arch':    rpm[4]  }
 	return rpmPkgs
 
+def ValueInDictList( dictList, dictKey, dictValue ):
+	for dic in dictList:
+		if dic[ dictKey ] == dictValue: return True
+	return False
 
 def GotTagWithValue(node, tag, value):
 	for leaf in node.iter(tag):
@@ -65,13 +76,11 @@ def IsAppliable( tree, leaf, marker ):
 rpmPkgs =  GetRpmListFromRPM()
 
 
-
-
 reportArray = {}
 for node in root:
 	if node.tag == 'meta': continue
 	if not IsAppliable( node, 'os_release', os_release ): continue
-	if not IsAppliable( node, 'os_arch', os_arch ):	      continue
+	if not IsAppliable( node,    'os_arch', os_arch ):    continue
 	for pkgLine in node.iter( 'packages' ):
 		pkg = splitFilename( pkgLine.text )
 		if pkg[0] in rpmPkgs:
@@ -81,6 +90,7 @@ for node in root:
 			if compareEVR( errPkg, insPkg ) > 0:
 				if not pkg[0] in reportArray:
 					reportArray[ pkg[0] ] = []
+				if ValueInDictList( reportArray[ pkg[0] ], 'err', node.tag ): continue
 				reportArray[ pkg[0] ].append({ 
 					'err': node.tag, 
 					'severity': node.get('severity'), 
@@ -89,12 +99,6 @@ for node in root:
 					'version': errPkg[1],
 					'release': errPkg[2]
 				})
-#				print node.tag + " " + pkg[0]
-#				print "Installed: " 
-#				print insPkg
-#				print "Errata: " 
-#				print errPkg
-#				print ''
 
 for i in reportArray:
 	print '\n{} ver. {} rel. {}'.format(i, rpmPkgs[i]['version'], rpmPkgs[i]['release'])
