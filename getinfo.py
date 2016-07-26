@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# awful as hell. treat this code as quick proof-of-concept and nothing more.
+
 from subprocess import check_output
 from rpmUtils.miscutils import compareEVR
 from rpmUtils.miscutils import splitFilename
@@ -75,7 +77,7 @@ def IsAppliable( tree, leaf, marker ):
 
 rpmPkgs =  GetRpmListFromRPM()
 
-
+# here we go. sorry y'all
 reportArray = {}
 for node in root:
 	if node.tag == 'meta': continue
